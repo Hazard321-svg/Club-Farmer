@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>No Play No Gain — Đọc Vị Trận Đấu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0D1117;
+      --surface:   #161B22;
+      --card:      #1C2128;
+      --border:    #30363D;
+      --green:     #00FF87;
+      --green-dim: #00C96B;
+      --red:       #FF4D6D;
+      --gold:      #FFD700;
+      --text:      #E6EDF3;
+      --muted:     #8B949E;
+      --draw:      #A78BFA;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: var(--green);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 1px;
+      color: var(--text);
+    }
+
+    .logo-text span { color: var(--green); }
+
+    nav { display: flex; gap: 6px; }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .nav-btn.active, .nav-btn:hover {
+      background: var(--green);
+      color: #000;
+      border-color: var(--green);
+      font-weight: 600;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 48px 24px 32px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .hero-eyebrow {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 12px;
+    }
+
+    .hero h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(40px, 8vw, 72px);
+      line-height: 1;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--green);
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 15px;
+      max-width: 480px;
+      line-height: 1.6;
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 32px;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+
+    .stat { display: flex; flex-direction: column; gap: 2px; }
+
+    .stat-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      color: var(--green);
+      line-height: 1;
+    }
+
+    .stat-label { font-size: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+
+    /* ── SECTION ── */
+    .section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px 60px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 1px;
+      color: var(--text);
+    }
+
+    .section-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── MATCH CARD ── */
+    .match-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 14px;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .match-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--green);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .match-card:hover {
+      border-color: var(--green);
+      transform: translateX(2px);
+    }
+
+    .match-card:hover::before { opacity: 1; }
+
+    .match-card.live::before { opacity: 1; background: var(--red); }
+    .match-card.live { border-color: rgba(255,77,109,0.4); }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .match-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .league-badge {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #000;
+      background: var(--green);
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .league-badge.ucl { background: #1DA1F2; }
+    .league-badge.wc { background: var(--gold); color: #000; }
+
+    .match-time {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .live-dot {
+      width: 7px; height: 7px;
+      background: var(--red);
+      border-radius: 50%;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* Teams row */
+    .teams-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+
+    .team {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .team.away { flex-direction: row-reverse; }
+
+    .team-flag {
+      font-size: 28px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .team-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 1px;
+      color: var(--text);
+    }
+
+    .vs-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .vs-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 2px;
+    }
+
+    .match-score {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      color: var(--green);
+      letter-spacing: 3px;
+    }
+
+    /* Odds bar — the signature element */
+    .odds-section { margin-bottom: 14px; }
+
+    .odds-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .odds-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .odds-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      min-width: 38px;
+      text-align: center;
+    }
+
+    .odds-val.home { color: var(--green); }
+    .odds-val.draw { color: var(--draw); }
+    .odds-val.away { color: var(--red); }
+
+    .odds-bar {
+      flex: 1;
+      height: 8px;
+      border-radius: 99px;
+      background: var(--border);
+      overflow: hidden;
+      display: flex;
+      gap: 2px;
+    }
+
+    .bar-home {
+      height: 100%;
+      background: var(--green);
+      border-radius: 99px 0 0 99px;
+      transition: width 0.8s cubic-bezier(.4,0,.2,1);
+    }
+
+    .bar-draw {
+      height: 100%;
+      background: var(--draw);
+      transition: width 0.8s cubic-bezier(.4,0,.2,1);
+    }
+
+    .bar-away {
+      height: 100%;
+      background: var(--red);
+      border-radius: 0 99px 99px 0;
+      transition: width 0.8s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* Prediction row */
+    .prediction-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .prediction-label {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .prediction-label::before {
+      content: '🔮';
+      font-size: 13px;
+    }
+
+    .prediction-pick {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green);
+      background: rgba(0,255,135,0.1);
+      border: 1px solid rgba(0,255,135,0.25);
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .prediction-pick.lose { color: var(--red); background: rgba(255,77,109,0.1); border-color: rgba(255,77,109,0.25); }
+    .prediction-pick.draw { color: var(--draw); background: rgba(167,139,250,0.1); border-color: rgba(167,139,250,0.25); }
+
+    .confidence {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .conf-dots { display: flex; gap: 3px; }
+
+    .conf-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+
+    .conf-dot.filled { background: var(--gold); }
+
+    /* ── FEATURED MATCH ── */
+    .featured-card {
+      background: linear-gradient(135deg, #161B22 0%, #1C2128 60%, #0D1F12 100%);
+      border: 1px solid rgba(0,255,135,0.3);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .featured-card::after {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(0,255,135,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .featured-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      border: 1px solid rgba(255,215,0,0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .featured-teams {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .featured-team {
+      text-align: center;
+      flex: 1;
+    }
+
+    .featured-flag { font-size: 52px; line-height: 1; margin-bottom: 8px; }
+
+    .featured-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 2px;
+    }
+
+    .featured-vs {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      color: var(--muted);
+      letter-spacing: 4px;
+      padding: 0 16px;
+    }
+
+    .featured-analysis {
+      background: rgba(0,0,0,0.3);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.7;
+      border-left: 3px solid var(--green);
+    }
+
+    .featured-analysis strong { color: var(--text); }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    footer span { color: var(--green); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      header { padding: 0 16px; }
+      nav .nav-btn:not(.active) { display: none; }
+      .hero { padding: 32px 16px 24px; }
+      .section { padding: 0 16px 40px; }
+      .featured-card { padding: 20px 16px; }
+      .featured-flag { font-size: 36px; }
+      .featured-name { font-size: 20px; }
+      .team-name { font-size: 16px; }
+      .match-card { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚽</div>
+    <div class="logo-text">NO PLAY<span> NO GAIN</span></div>
+  </div>
+  <nav>
+    <button class="nav-btn active">Hôm nay</button>
+    <button class="nav-btn">Tuần này</button>
+    <button class="nav-btn">Kết quả</button>
+  </nav>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">⚡ Đọc vị trận đấu · Góc nhìn có chiều sâu</div>
+  <h1>NO PLAY<br/><em>NO GAIN</em></h1>
+  <p>Đọc vị phong độ, sức mạnh đội hình và lịch sử đối đầu — không cảm tính, chỉ có số liệu.</p>
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-num">74%</div>
+      <div class="stat-label">Độ chính xác</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">142</div>
+      <div class="stat-label">Trận đã đọc vị</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">12</div>
+      <div class="stat-label">Trận hôm nay</div>
+    </div>
+  </div>
+</div>
+
+<!-- MESSI VS RONALDO BANNER -->
+<div style="max-width:900px;margin:0 auto 8px;padding:0 24px;">
+  <div style="border-radius:16px;overflow:hidden;border:1px solid #30363D;background:#161B22;position:relative;">
+    <div style="position:absolute;top:12px;left:50%;transform:translateX(-50%);background:#FFD700;color:#000;font-size:11px;font-weight:700;letter-spacing:2px;padding:4px 14px;border-radius:20px;white-space:nowrap;z-index:2;">👑 CUỘC CHIẾN MUÔN THUỞ</div>
+    <svg width="100%" viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
+      <!-- Background field -->
+      <rect width="900" height="280" fill="#0D1117"/>
+      <!-- Grass stripes -->
+      <rect x="0" y="200" width="900" height="80" fill="#0D2010"/>
+      <rect x="0" y="200" width="900" height="6" fill="#00FF87" opacity="0.15"/>
+      <!-- Center line -->
+      <line x1="450" y1="200" x2="450" y2="280" stroke="#00FF87" stroke-width="1" opacity="0.3"/>
+      <ellipse cx="450" cy="280" rx="60" ry="20" fill="none" stroke="#00FF87" stroke-width="1" opacity="0.2"/>
+
+      <!-- Stars bg -->
+      <circle cx="120" cy="40" r="1.5" fill="#FFD700" opacity="0.4"/>
+      <circle cx="200" cy="20" r="1" fill="#fff" opacity="0.3"/>
+      <circle cx="350" cy="55" r="1" fill="#fff" opacity="0.2"/>
+      <circle cx="700" cy="30" r="1.5" fill="#FFD700" opacity="0.4"/>
+      <circle cx="780" cy="15" r="1" fill="#fff" opacity="0.3"/>
+      <circle cx="600" cy="50" r="1" fill="#fff" opacity="0.2"/>
+
+      <!-- ═══ MESSI (left) ═══ -->
+      <!-- Shadow -->
+      <ellipse cx="210" cy="272" rx="45" ry="8" fill="#000" opacity="0.4"/>
+      <!-- Body (light blue Argentina) -->
+      <rect x="168" y="148" width="70" height="75" rx="10" fill="#74ACDF"/>
+      <!-- Stripes on jersey -->
+      <rect x="178" y="148" width="12" height="75" rx="2" fill="#fff" opacity="0.5"/>
+      <rect x="196" y="148" width="12" height="75" rx="2" fill="#fff" opacity="0.5"/>
+      <!-- Arms -->
+      <rect x="140" y="150" width="28" height="18" rx="9" fill="#74ACDF"/>
+      <rect x="238" y="150" width="28" height="18" rx="9" fill="#74ACDF"/>
+      <!-- Hands -->
+      <circle cx="136" cy="162" r="10" fill="#F5C5A0"/>
+      <circle cx="270" cy="162" r="10" fill="#F5C5A0"/>
+      <!-- Left hand: holding trophy -->
+      <rect x="118" y="142" width="22" height="28" rx="4" fill="#FFD700"/>
+      <rect x="122" y="130" width="14" height="16" rx="3" fill="#FFD700"/>
+      <ellipse cx="129" cy="128" rx="10" ry="7" fill="#FFD700"/>
+      <text x="129" y="131" text-anchor="middle" font-size="8" fill="#000" font-weight="bold">★</text>
+      <!-- Shorts -->
+      <rect x="168" y="218" width="30" height="35" rx="5" fill="#000060"/>
+      <rect x="203" y="218" width="30" height="35" rx="5" fill="#000060"/>
+      <!-- Socks & boots -->
+      <rect x="170" y="248" width="26" height="20" rx="3" fill="#fff"/>
+      <rect x="205" y="248" width="26" height="20" rx="3" fill="#fff"/>
+      <rect x="168" y="260" width="30" height="12" rx="4" fill="#111"/>
+      <rect x="203" y="260" width="30" height="12" rx="4" fill="#111"/>
+      <!-- Neck -->
+      <rect x="193" y="128" width="20" height="25" rx="5" fill="#F5C5A0"/>
+      <!-- Head -->
+      <ellipse cx="203" cy="112" rx="34" ry="36" fill="#F5C5A0"/>
+      <!-- Hair (dark, messy Messi style) -->
+      <ellipse cx="203" cy="83" rx="34" ry="16" fill="#2C1A0E"/>
+      <ellipse cx="180" cy="90" rx="14" ry="10" fill="#2C1A0E"/>
+      <ellipse cx="226" cy="90" rx="12" ry="8" fill="#2C1A0E"/>
+      <!-- Eyes (happy) -->
+      <ellipse cx="190" cy="110" rx="6" ry="7" fill="#fff"/>
+      <ellipse cx="216" cy="110" rx="6" ry="7" fill="#fff"/>
+      <circle cx="192" cy="111" r="4" fill="#3B2000"/>
+      <circle cx="218" cy="111" r="4" fill="#3B2000"/>
+      <circle cx="193" cy="109" r="1.5" fill="#fff"/>
+      <circle cx="219" cy="109" r="1.5" fill="#fff"/>
+      <!-- Eyebrows (smug) -->
+      <path d="M184 102 Q190 98 196 101" stroke="#2C1A0E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M210 101 Q216 98 222 102" stroke="#2C1A0E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- Big smile -->
+      <path d="M187 126 Q203 140 219 126" stroke="#C0703A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- Beard -->
+      <ellipse cx="203" cy="133" rx="18" ry="8" fill="#5C3A1E" opacity="0.5"/>
+      <!-- Ear -->
+      <ellipse cx="169" cy="113" rx="7" ry="9" fill="#F5C5A0"/>
+      <ellipse cx="237" cy="113" rx="7" ry="9" fill="#F5C5A0"/>
+      <!-- Name -->
+      <text x="203" y="298" text-anchor="middle" font-size="14" font-weight="bold" fill="#74ACDF" font-family="Arial">MESSI</text>
+      <!-- Stars above -->
+      <text x="203" y="60" text-anchor="middle" font-size="16" fill="#FFD700">★★★</text>
+      <!-- Speech bubble -->
+      <rect x="270" y="55" width="150" height="55" rx="14" fill="#1C2128" stroke="#00FF87" stroke-width="1.5"/>
+      <polygon points="275,95 258,108 285,95" fill="#1C2128"/>
+      <line x1="275" y1="95" x2="258" y2="108" stroke="#00FF87" stroke-width="1.5"/>
+      <line x1="285" y1="95" x2="258" y2="108" stroke="#1C2128" stroke-width="2"/>
+      <text x="345" y="77" text-anchor="middle" font-size="12" fill="#00FF87" font-weight="bold" font-family="Arial">Mày có</text>
+      <text x="345" y="93" text-anchor="middle" font-size="12" fill="#00FF87" font-weight="bold" font-family="Arial">mấy Ballon d'Or? 😏</text>
+
+      <!-- ═══ RONALDO (right) ═══ -->
+      <!-- Shadow -->
+      <ellipse cx="690" cy="272" rx="45" ry="8" fill="#000" opacity="0.4"/>
+      <!-- Body (red Portugal) -->
+      <rect x="648" y="148" width="70" height="75" rx="10" fill="#CC0000"/>
+      <!-- Jersey details -->
+      <rect x="670" y="148" width="8" height="40" rx="2" fill="#8B0000" opacity="0.5"/>
+      <!-- Arms (muscular - bigger) -->
+      <rect x="618" y="148" width="32" height="20" rx="10" fill="#CC0000"/>
+      <rect x="718" y="148" width="32" height="20" rx="10" fill="#CC0000"/>
+      <!-- Hands -->
+      <circle cx="614" cy="162" r="11" fill="#D4956A"/>
+      <!-- Right hand: pointing at mirror -->
+      <rect x="748" y="136" width="16" height="40" rx="4" fill="#C0C0C0" opacity="0.8"/>
+      <ellipse cx="756" cy="136" rx="12" ry="8" fill="#C0C0C0" opacity="0.8"/>
+      <!-- Mirror reflection (CR7 admiring himself) -->
+      <text x="757" y="132" text-anchor="middle" font-size="10" fill="#FFD700">★</text>
+      <!-- Shorts -->
+      <rect x="648" y="218" width="30" height="35" rx="5" fill="#006600"/>
+      <rect x="683" y="218" width="30" height="35" rx="5" fill="#006600"/>
+      <!-- Socks & boots -->
+      <rect x="650" y="248" width="26" height="20" rx="3" fill="#fff"/>
+      <rect x="685" y="248" width="26" height="20" rx="3" fill="#fff"/>
+      <rect x="648" y="260" width="30" height="12" rx="4" fill="#111"/>
+      <rect x="683" y="260" width="30" height="12" rx="4" fill="#111"/>
+      <!-- Neck (thick) -->
+      <rect x="673" y="125" width="24" height="28" rx="6" fill="#D4956A"/>
+      <!-- Head (square jaw) -->
+      <rect x="655" y="78" width="70" height="65" rx="22" fill="#D4956A"/>
+      <!-- Hair (slicked back CR7) -->
+      <rect x="655" y="74" width="70" height="22" rx="12" fill="#1A0A00"/>
+      <path d="M655 85 Q685 68 725 85" fill="#1A0A00"/>
+      <!-- Perfect hair line -->
+      <path d="M660 88 Q685 76 720 88" stroke="#2C1A0E" stroke-width="1" fill="none"/>
+      <!-- Eyes (intense stare) -->
+      <ellipse cx="675" cy="110" rx="7" ry="7" fill="#fff"/>
+      <ellipse cx="705" cy="110" rx="7" ry="7" fill="#fff"/>
+      <circle cx="677" cy="111" r="4.5" fill="#2C5F2E"/>
+      <circle cx="707" cy="111" r="4.5" fill="#2C5F2E"/>
+      <circle cx="678" cy="109" r="1.5" fill="#fff"/>
+      <circle cx="708" cy="109" r="1.5" fill="#fff"/>
+      <!-- Eyebrows (dramatic) -->
+      <path d="M667 101 Q675 96 683 100" stroke="#1A0A00" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M697 100 Q705 96 713 101" stroke="#1A0A00" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- Siu mouth / smirk -->
+      <path d="M672 132 Q685 138 698 132" stroke="#C07050" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- Jaw definition -->
+      <path d="M658 120 Q655 138 668 148" stroke="#C07050" stroke-width="1" fill="none" opacity="0.4"/>
+      <path d="M722 120 Q725 138 712 148" stroke="#C07050" stroke-width="1" fill="none" opacity="0.4"/>
+      <!-- Ear -->
+      <ellipse cx="655" cy="113" rx="7" ry="9" fill="#D4956A"/>
+      <ellipse cx="725" cy="113" rx="7" ry="9" fill="#D4956A"/>
+      <!-- Name -->
+      <text x="690" y="298" text-anchor="middle" font-size="14" font-weight="bold" fill="#CC0000" font-family="Arial">RONALDO</text>
+      <!-- Stars above -->
+      <text x="690" y="60" text-anchor="middle" font-size="16" fill="#FFD700">★★★</text>
+      <!-- Speech bubble -->
+      <rect x="475" y="55" width="160" height="55" rx="14" fill="#1C2128" stroke="#FF4D6D" stroke-width="1.5"/>
+      <polygon points="625,95 645,108 615,95" fill="#1C2128"/>
+      <line x1="625" y1="95" x2="645" y2="108" stroke="#FF4D6D" stroke-width="1.5"/>
+      <line x1="615" y1="95" x2="645" y2="108" stroke="#1C2128" stroke-width="2"/>
+      <text x="555" y="77" text-anchor="middle" font-size="12" fill="#FF4D6D" font-weight="bold" font-family="Arial">SIUUUU! Tao</text>
+      <text x="555" y="93" text-anchor="middle" font-size="12" fill="#FF4D6D" font-weight="bold" font-family="Arial">đẹp trai hơn 💪</text>
+
+      <!-- VS in middle -->
+      <circle cx="450" cy="155" r="38" fill="#0D1117" stroke="#FFD700" stroke-width="2"/>
+      <text x="450" y="148" text-anchor="middle" font-size="22" font-weight="bold" fill="#FFD700" font-family="Arial">VS</text>
+      <text x="450" y="168" text-anchor="middle" font-size="9" fill="#8B949E" font-family="Arial">GOAT DEBATE</text>
+    </svg>
+  </div>
+</div>
+
+<!-- FEATURED MATCH -->
+<div class="section">
+  <div class="featured-card">
+    <div class="featured-badge">⭐ Trận nổi bật</div>
+    <div class="featured-teams">
+      <div class="featured-team">
+        <div class="featured-flag">🇧🇷</div>
+        <div class="featured-name">Brazil</div>
+      </div>
+      <div class="featured-vs">VS</div>
+      <div class="featured-team">
+        <div class="featured-flag">🇦🇷</div>
+        <div class="featured-name">Argentina</div>
+      </div>
+    </div>
+
+    <div class="odds-section">
+      <div class="odds-label">Sức mạnh đối đầu</div>
+      <div class="odds-bar-wrap">
+        <div class="odds-val home">2.10</div>
+        <div class="odds-bar">
+          <div class="bar-home" style="width:42%"></div>
+          <div class="bar-draw" style="width:25%"></div>
+          <div class="bar-away" style="width:33%"></div>
+        </div>
+        <div class="odds-val draw">3.20</div>
+        <div class="odds-bar" style="background:transparent; flex:0; width:4px"></div>
+        <div class="odds-val away">1.80</div>
+      </div>
+    </div>
+
+    <div class="featured-analysis">
+      <strong>Đọc vị:</strong> Argentina đang có phong độ cao hơn với 4 trận thắng liên tiếp. Brazil thiếu vắng Vinicius Jr do chấn thương. Lịch sử đối đầu gần đây nghiêng về <strong style="color:var(--red)">Argentina</strong> ở các trận knockout. Sức mạnh tổng thể đang nghiêng về phía Argentina.
+    </div>
+
+    <div class="prediction-row" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">
+      <div class="prediction-label">Góc nhìn của tao</div>
+      <div class="prediction-pick lose">Argentina thắng hoặc hòa</div>
+      <div class="confidence">
+        Độ tự tin
+        <div class="conf-dots">
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MATCH LIST -->
+  <div class="section-header">
+    <div class="section-title">Các trận hôm nay</div>
+    <div class="section-tag">28 tháng 6 · 2026</div>
+  </div>
+
+  <!-- Card 1 — Live -->
+  <div class="match-card live">
+    <div class="card-top">
+      <div class="match-meta">
+        <span class="league-badge wc">World Cup</span>
+        <div class="match-time">
+          <div class="live-dot"></div>
+          LIVE · 67'
+        </div>
+      </div>
+      <div style="font-size:12px; color:var(--muted)">Bán kết</div>
+    </div>
+    <div class="teams-row">
+      <div class="team">
+        <div class="team-flag">🇫🇷</div>
+        <div class="team-name">Pháp</div>
+      </div>
+      <div class="vs-block">
+        <div class="match-score">1 – 1</div>
+        <div class="vs-text">Live</div>
+      </div>
+      <div class="team away">
+        <div class="team-flag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</div>
+        <div class="team-name">Anh</div>
+      </div>
+    </div>
+    <div class="odds-section">
+      <div class="odds-label">Sức mạnh ban đầu</div>
+      <div class="odds-bar-wrap">
+        <div class="odds-val home">2.40</div>
+        <div class="odds-bar">
+          <div class="bar-home" style="width:38%"></div>
+          <div class="bar-draw" style="width:28%"></div>
+          <div class="bar-away" style="width:34%"></div>
+        </div>
+        <div class="odds-val draw">3.10</div>
+        <div class="odds-bar" style="background:transparent; flex:0; width:4px"></div>
+        <div class="odds-val away">2.20</div>
+      </div>
+    </div>
+    <div class="prediction-row">
+      <div class="prediction-label">Nhận định</div>
+      <div class="prediction-pick">Pháp thắng</div>
+      <div class="confidence">
+        Độ tự tin
+        <div class="conf-dots">
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot"></div>
+          <div class="conf-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2 -->
+  <div class="match-card">
+    <div class="card-top">
+      <div class="match-meta">
+        <span class="league-badge wc">World Cup</span>
+        <div class="match-time">🕐 20:00</div>
+      </div>
+      <div style="font-size:12px; color:var(--muted)">Tứ kết</div>
+    </div>
+    <div class="teams-row">
+      <div class="team">
+        <div class="team-flag">🇩🇪</div>
+        <div class="team-name">Đức</div>
+      </div>
+      <div class="vs-block">
+        <div class="vs-text">VS</div>
+      </div>
+      <div class="team away">
+        <div class="team-flag">🇵🇹</div>
+        <div class="team-name">Bồ Đào Nha</div>
+      </div>
+    </div>
+    <div class="odds-section">
+      <div class="odds-label">Sức mạnh đối đầu</div>
+      <div class="odds-bar-wrap">
+        <div class="odds-val home">2.80</div>
+        <div class="odds-bar">
+          <div class="bar-home" style="width:32%"></div>
+          <div class="bar-draw" style="width:26%"></div>
+          <div class="bar-away" style="width:42%"></div>
+        </div>
+        <div class="odds-val draw">3.40</div>
+        <div class="odds-bar" style="background:transparent; flex:0; width:4px"></div>
+        <div class="odds-val away">1.65</div>
+      </div>
+    </div>
+    <div class="prediction-row">
+      <div class="prediction-label">Nhận định</div>
+      <div class="prediction-pick lose">Bồ Đào Nha thắng</div>
+      <div class="confidence">
+        Độ tự tin
+        <div class="conf-dots">
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 3 -->
+  <div class="match-card">
+    <div class="card-top">
+      <div class="match-meta">
+        <span class="league-badge">Premier League</span>
+        <div class="match-time">🕐 22:30</div>
+      </div>
+      <div style="font-size:12px; color:var(--muted)">Vòng 38</div>
+    </div>
+    <div class="teams-row">
+      <div class="team">
+        <div class="team-flag">🔴</div>
+        <div class="team-name">Man United</div>
+      </div>
+      <div class="vs-block">
+        <div class="vs-text">VS</div>
+      </div>
+      <div class="team away">
+        <div class="team-flag">🔵</div>
+        <div class="team-name">Chelsea</div>
+      </div>
+    </div>
+    <div class="odds-section">
+      <div class="odds-label">Sức mạnh đối đầu</div>
+      <div class="odds-bar-wrap">
+        <div class="odds-val home">3.10</div>
+        <div class="odds-bar">
+          <div class="bar-home" style="width:28%"></div>
+          <div class="bar-draw" style="width:30%"></div>
+          <div class="bar-away" style="width:42%"></div>
+        </div>
+        <div class="odds-val draw">3.20</div>
+        <div class="odds-bar" style="background:transparent; flex:0; width:4px"></div>
+        <div class="odds-val away">1.95</div>
+      </div>
+    </div>
+    <div class="prediction-row">
+      <div class="prediction-label">Nhận định</div>
+      <div class="prediction-pick draw">Hòa</div>
+      <div class="confidence">
+        Độ tự tin
+        <div class="conf-dots">
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot"></div>
+          <div class="conf-dot"></div>
+          <div class="conf-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 4 -->
+  <div class="match-card">
+    <div class="card-top">
+      <div class="match-meta">
+        <span class="league-badge ucl">Champions League</span>
+        <div class="match-time">🕐 02:00</div>
+      </div>
+      <div style="font-size:12px; color:var(--muted)">Chung kết</div>
+    </div>
+    <div class="teams-row">
+      <div class="team">
+        <div class="team-flag">⚪</div>
+        <div class="team-name">Real Madrid</div>
+      </div>
+      <div class="vs-block">
+        <div class="vs-text">VS</div>
+      </div>
+      <div class="team away">
+        <div class="team-flag">🔵</div>
+        <div class="team-name">Man City</div>
+      </div>
+    </div>
+    <div class="odds-section">
+      <div class="odds-label">Sức mạnh đối đầu</div>
+      <div class="odds-bar-wrap">
+        <div class="odds-val home">2.00</div>
+        <div class="odds-bar">
+          <div class="bar-home" style="width:44%"></div>
+          <div class="bar-draw" style="width:24%"></div>
+          <div class="bar-away" style="width:32%"></div>
+        </div>
+        <div class="odds-val draw">3.50</div>
+        <div class="odds-bar" style="background:transparent; flex:0; width:4px"></div>
+        <div class="odds-val away">2.10</div>
+      </div>
+    </div>
+    <div class="prediction-row">
+      <div class="prediction-label">Nhận định</div>
+      <div class="prediction-pick">Real Madrid thắng</div>
+      <div class="confidence">
+        Độ tự tin
+        <div class="conf-dots">
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot filled"></div>
+          <div class="conf-dot"></div>
+          <div class="conf-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>Made with ⚽ by <span>No Play No Gain</span> · Chỉ mang tính tham khảo, không phải lời khuyên đầu tư</p>
+</footer>
+
+</body>
+</html>
